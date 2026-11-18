@@ -2,28 +2,6 @@
 import random
 import string
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-def computer_moves(actual_grid_string, who_moves_x_or_o):
-    while True:
-        index_to_change = random.randint(0, 8)
-        if actual_grid_string[index_to_change] == '_':
-            break
-    print(index_to_change)
-    return actual_grid_string[:index_to_change] + who_moves_x_or_o + actual_grid_string[index_to_change + 1:]
-
-
 class Grid:
     def __init__(self, grid_string):
         self.actual_grid_string = grid_string
@@ -110,6 +88,49 @@ class Game():
         else:
             self.who_moves_x_or_o = 'X'
 
+    def random_move(self, actual_grid_string, who_moves_x_or_o):
+        while True:
+            index_to_change = random.randint(0, 8)
+            if actual_grid_string[index_to_change] == '_':
+                break
+        print('losowy', index_to_change)
+        return actual_grid_string[:index_to_change] + who_moves_x_or_o + actual_grid_string[index_to_change + 1:]
+
+    def winning_move(self, actual_grid_string, who_moves_x_or_o):
+        # todo
+        for i in range(len(actual_grid_string)):
+            print(i)
+            if actual_grid_string[i] == '_':
+                if self.three_in_row(actual_grid_string[:i] + who_moves_x_or_o + actual_grid_string[i + 1:], who_moves_x_or_o) > 0:
+                    print('yes')
+                    return i
+        return None
+
+    def computer_moves(self,actual_grid_string, who_moves_x_or_o):
+        # AI easy --> random move
+        if self.game_parameters[who_moves_x_or_o] == 'easy':
+            return self.random_move(actual_grid_string, who_moves_x_or_o)
+
+        # AI medium --> 3 rules
+        elif self.game_parameters[who_moves_x_or_o] == 'medium':
+            # 1 rule
+            my_winning_move_index = self.winning_move(actual_grid_string, who_moves_x_or_o)
+            print(my_winning_move_index)
+            if my_winning_move_index:
+                return actual_grid_string[:my_winning_move_index] + who_moves_x_or_o + actual_grid_string[my_winning_move_index + 1:]
+
+            # 2 rule
+            if who_moves_x_or_o == 'X':
+                opponent = 'O'
+            else:
+                opponent = 'X'
+            opponent_winning_move_index = self.winning_move(actual_grid_string, opponent)
+            print(opponent_winning_move_index)
+            if opponent_winning_move_index:
+                return actual_grid_string[:opponent_winning_move_index] + who_moves_x_or_o + actual_grid_string[opponent_winning_move_index + 1:]
+
+            return self.random_move(actual_grid_string, who_moves_x_or_o)
+
 
     def game_loop(self):
         self.grid_for_this_game.print_grid()
@@ -120,18 +141,15 @@ class Game():
                     user_move_input = input('Enter the coordinates: ')
                     verification_status = self.verify(self.actual_grid_string, user_move_input)
                     if verification_status == 'valid':
-
                         self.actual_grid_string = self.update_grid_string(self.actual_grid_string, user_move_input, self.who_moves_x_or_o)
-
                         break
                     else:
                         print(verification_status)
                         continue
-
-            elif self.game_parameters[self.who_moves_x_or_o] == 'easy':
-                print('Making move level "easy"')
-                self.actual_grid_string = computer_moves(self.actual_grid_string, self.who_moves_x_or_o)
-
+            # computer moves
+            else:
+                print(f'Making move level "{self.game_parameters[self.who_moves_x_or_o]}"')
+                self.actual_grid_string = self.computer_moves(self.actual_grid_string, self.who_moves_x_or_o)
 
             # print(actual_grid_string)
             self.grid_for_this_game.actual_grid_string = self.actual_grid_string
@@ -144,10 +162,9 @@ class Game():
             # print(game_state)
             # break
 
-
 def main():
     while True:
-        right_commands = ['user', 'easy']
+        right_commands = ['user', 'easy', 'medium']
         game_parameters = {'X': None, 'O': None}
         while True:
             command = input('Input command: ').lower()
@@ -166,7 +183,6 @@ def main():
             continue
         if command == 'exit':
             break
-
 
 if __name__ == '__main__':
     main()
