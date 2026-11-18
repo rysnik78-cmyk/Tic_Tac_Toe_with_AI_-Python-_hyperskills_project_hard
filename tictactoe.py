@@ -93,16 +93,12 @@ class Game():
             index_to_change = random.randint(0, 8)
             if actual_grid_string[index_to_change] == '_':
                 break
-        print('losowy', index_to_change)
         return actual_grid_string[:index_to_change] + who_moves_x_or_o + actual_grid_string[index_to_change + 1:]
 
     def winning_move(self, actual_grid_string, who_moves_x_or_o):
-        # todo
         for i in range(len(actual_grid_string)):
-            print(i)
             if actual_grid_string[i] == '_':
                 if self.three_in_row(actual_grid_string[:i] + who_moves_x_or_o + actual_grid_string[i + 1:], who_moves_x_or_o) > 0:
-                    print('yes')
                     return i
         return None
 
@@ -115,8 +111,7 @@ class Game():
         elif self.game_parameters[who_moves_x_or_o] == 'medium':
             # 1 rule
             my_winning_move_index = self.winning_move(actual_grid_string, who_moves_x_or_o)
-            print(my_winning_move_index)
-            if my_winning_move_index:
+            if my_winning_move_index is not None:
                 return actual_grid_string[:my_winning_move_index] + who_moves_x_or_o + actual_grid_string[my_winning_move_index + 1:]
 
             # 2 rule
@@ -130,6 +125,55 @@ class Game():
                 return actual_grid_string[:opponent_winning_move_index] + who_moves_x_or_o + actual_grid_string[opponent_winning_move_index + 1:]
 
             return self.random_move(actual_grid_string, who_moves_x_or_o)
+
+        elif self.game_parameters[who_moves_x_or_o] == 'hard':
+            return self.minmax_move(actual_grid_string, who_moves_x_or_o)
+
+    def minimax(self, grid_string, current_player, ai_player, depth):
+        opponent = 'O' if ai_player == 'X' else 'X'
+        if self.three_in_row(grid_string, ai_player) > 0:
+            return 10 - depth
+        if self.three_in_row(grid_string, opponent) > 0:
+            return depth - 10
+        if '_' not in grid_string:
+            return 0
+
+        if current_player == ai_player:
+            best_score = -999
+            for i in range(9):
+                if grid_string[i] == '_':
+                    new_grid = grid_string[:i] + current_player + grid_string[i + 1:]
+                    score = self.minimax(new_grid, opponent, ai_player, depth + 1)
+                    if score > best_score:
+                        best_score = score
+            return best_score
+        else:
+            best_score = 999
+            for i in range(9):
+                if grid_string[i] == '_':
+                    new_grid = grid_string[:i] + current_player + grid_string[i + 1:]
+                    score = self.minimax(new_grid, ai_player, ai_player, depth + 1)
+                    if score < best_score:
+                        best_score = score
+            return best_score
+
+    def minmax_move(self, actual_grid_string, who_moves_x_or_o):
+        ai_player = who_moves_x_or_o
+        opponent = 'O' if ai_player == 'X' else 'X'
+        best_score = -999
+        best_index = None
+
+        for i in range(9):
+            if actual_grid_string[i] == '_':
+                new_grid = actual_grid_string[:i] + ai_player + actual_grid_string[i + 1:]
+                score = self.minimax(new_grid, opponent, ai_player, 1)
+                if score > best_score:
+                    best_score = score
+                    best_index = i
+
+        if best_index is not None:
+            return actual_grid_string[:best_index] + who_moves_x_or_o + actual_grid_string[best_index + 1:]
+        return actual_grid_string
 
 
     def game_loop(self):
@@ -164,7 +208,7 @@ class Game():
 
 def main():
     while True:
-        right_commands = ['user', 'easy', 'medium']
+        right_commands = ['user', 'easy', 'medium', 'hard']
         game_parameters = {'X': None, 'O': None}
         while True:
             command = input('Input command: ').lower()
